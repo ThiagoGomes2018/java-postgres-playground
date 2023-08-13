@@ -7,7 +7,7 @@ public class Estado {
     private RegiaoGeografica regiao;
     private int areKm2;
     private int populacao;
-    
+
     public Long getId() {
         return id;
     }
@@ -43,5 +43,8 @@ public class Estado {
     }
     public void setPopulacao(int populacao) {
         this.populacao = populacao;
+    }
+    public String toString(){
+        return "Estado: " + nome + " ID: " + id + " UF:" + uf;
     }
 }
