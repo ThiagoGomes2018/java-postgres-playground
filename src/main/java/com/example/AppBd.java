@@ -5,6 +5,12 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 /*import java.sql.Statement;*/
 
+import com.example.dao.DAO;
+import com.example.dao.EstadoDAO;
+import com.example.dao.ProdutoDAO;
+import com.example.model.Marca;
+import com.example.model.Produto;
+
 public class AppBd {
     private static final String PASSWORD = "";
     private static final String USER_NAME = "gitpod";
@@ -16,92 +22,31 @@ public class AppBd {
 
     public AppBd(){
         try(var conn = getConnection()){
-            listarEstados(conn);
-            localizarEstado(conn, "TO");
+            var estadoDAO = new EstadoDAO(conn);
+            estadoDAO.listar();
+            estadoDAO.localizar("TO");
 
             var marca = new Marca();
             marca.setId(1L);
 
             var produto = new Produto();
-            produto.setValor(100.0);
+            produto.setId(205L);
+            produto.setValor(90.0);
             produto.setMarca(marca);
-            produto.setName("Produto Teste 2");
+            produto.setName("Produto Novo 1");
             
-            inserirProduto(conn, produto);
-            listarDadosTabela(conn, "produto");
+            var produtoDAO = new ProdutoDAO(conn);
+            produtoDAO.inserir(produto);
+            produtoDAO.excluir(203L);
+            produtoDAO.alterar(produto);
+            var dao = new DAO(conn);
+            dao.listarDadosTabela("produto");
+            
         }
         catch (SQLException e) {
             System.err.println("Não foi possível carregar o banco de dados" + e.getMessage());        
         }
-    }
-
-
-    private void inserirProduto(Connection conn, Produto produto) {
-        var sql = "insert into produto (nome, marca_id, valor) values (?, ?, ?)";
-        try (var statement = conn.prepareStatement(sql);){
-            statement.setString(1, produto.getName());
-            statement.setLong(2, produto.getMarca().getId());
-            statement.setDouble(3, produto.getValor());
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            System.err.println("Não foi possível realizar a operação: " + e.getMessage());
-        }
-    }
-
-    private void listarDadosTabela(Connection conn, String tabela) {
-        var sql = "select * from " + tabela;
-        try {
-            var statement = conn.createStatement();
-            var result = statement.executeQuery(sql);
-
-            var metadata = result.getMetaData();
-            int cols = metadata.getColumnCount();
-
-            for (int i = 1; i <= cols; i++) {
-                System.out.printf("%-25s | ", metadata.getColumnName(i));
-            }
-            System.out.println();
-
-            while(result.next()){
-                
-                for (int i = 1; i <= cols; i++) {
-                    System.out.printf("%-25s | ", result.getString(i));
-                    
-                }
-                System.out.println("");
-            }
-        } catch (SQLException e) {
-            System.err.println("Não foi possível realizar a consulta: " + e.getMessage());
-        }
-    }
-
-    private void localizarEstado(Connection conn, String uf) {
-        try{
-            var sql = "select * from estado where uf = ?";
-            var statement = conn.prepareStatement(sql);
-            System.out.println(sql);
-            statement.setString(1, uf);
-            var result = statement.executeQuery();
-            if(result.next())
-                System.out.printf("Id: %d Nome %s UF: %s\n", result.getInt("id"), result.getString("nome"), result.getString("uf"));
-        } catch (SQLException e) {
-            System.err.println("Não foi possível executar a consulta ao banco de dados" + e.getMessage());           
-        }
-    }
-
-    private void listarEstados(Connection conn) {
-            try{
-                System.out.println("Conexão com o banco realizada com sucesso");
-
-                var statement = conn.createStatement();
-                var result = statement.executeQuery("select * from estado");
-                while(result.next()){
-                    System.out.printf("Id: %d Nome %s UF: %s\n", result.getInt("id"), result.getString("nome"), result.getString("uf"));
-                }
-            } catch (SQLException e) {
-                System.err.println("Não foi possível executar a consulta ao banco de dados" + e.getMessage());           
-            }
-    }
+    }    
 
     private Connection getConnection() throws SQLException{
         return DriverManager.getConnection(JDBC_URL, USER_NAME, PASSWORD);
